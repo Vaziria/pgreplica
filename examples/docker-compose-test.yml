@@ -1,0 +1,48 @@
+version: '3.6'
+services: 
+    test:
+        image: puan_replica:latest
+        restart: always
+        environment: 
+            - DATABASE_HOST=127.0.0.1
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=heri7777
+            - POSTGRES_DB=test
+        command:
+            - "postgres"
+            - "-c"
+            - "wal_level=logical"
+            - "-c"
+            - "max_replication_slots=1"
+
+        volumes:
+            - data:/var/lib/postgresql
+        ports: 
+            - "5432:5432"
+
+    elastic:
+        image: elasticsearch:7.8.0
+        container_name: elastic
+        environment:
+          - node.name=elastic
+          - cluster.name=elastic-cluster
+          - discovery.seed_hosts=elastic
+          - cluster.initial_master_nodes=elastic          
+          - bootstrap.memory_lock=true
+          - "ES_JAVA_OPTS=-Xms112m -Xmx112m"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+        volumes:
+          - elastic:/usr/share/elasticsearch/data
+
+        restart: always
+            
+        ports:
+          - 9200:9200
+
+volumes:
+    data:
+    elastic: 
+
