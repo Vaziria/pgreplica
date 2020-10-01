@@ -50,6 +50,8 @@ def run_replication(conn, consumer):
 
 class BasicConsumer:
 
+	transactions = None
+
 	def ack(self, msg):
 		msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
@@ -57,8 +59,13 @@ class BasicConsumer:
 		
 		data = json.loads(msg.payload)
 		changes = data['change']
+		# print('------------')
+
+		self.transactions = changes
 
 		for change in changes:
+			# print(change)
+			# print('\n')
 			table = change.get('table')
 			kind = change.get('kind')
 
@@ -79,6 +86,19 @@ class BasicConsumer:
 			hasil[keys[c]] = values[c]
 
 		return hasil
+
+	def parse_delete(self, change):
+		oldkeys = change['oldkeys']
+		keys = oldkeys['keynames']
+		values = oldkeys['keyvalues']
+
+		hasil = {}
+
+		for c in range(0, len(keys)):
+			hasil[keys[c]] = values[c]
+
+		return hasil
+
 
 	def default_callback(self, kind, table, change):
 		logger.info('{}_{} not handled'.format(kind, table))
