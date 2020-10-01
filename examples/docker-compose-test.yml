@@ -29,7 +29,7 @@ services:
           - discovery.seed_hosts=elastic
           - cluster.initial_master_nodes=elastic          
           - bootstrap.memory_lock=true
-          - "ES_JAVA_OPTS=-Xms112m -Xmx112m"
+          - "ES_JAVA_OPTS=-Xms212m -Xmx212m"
         ulimits:
           memlock:
             soft: -1
@@ -41,6 +41,16 @@ services:
             
         ports:
           - 9200:9200
+
+    replication:
+        image: kampretcode/nara_replica:latest
+        restart: always
+        environment:
+          - postgres=postgresql+psycopg2://postgres:heri7777@postgresdb/postgres
+          - elasticdb=elastic
+        depends_on:
+          - elastic
+          - postgresdb
 
 volumes:
     data:
