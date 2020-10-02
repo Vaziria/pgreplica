@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from dateutil import parser as date_parser
 
 os.environ['logfile'] = 'puan_replica.log'
 
@@ -19,6 +20,11 @@ def create_connection(**kargs):
 	conn = psycopg2.connect(connection_factory=LogicalReplicationConnection, **kargs)
 
 	return conn
+
+def delete_replication(conn):
+	cur = conn.cursor()
+
+	cur.drop_replication_slot("python_puan")
 
 def run_replication(conn, consumer):
 
@@ -77,13 +83,30 @@ class BasicConsumer:
 		self.ack(msg)
 
 	def parse_data(self, change):
+		"""parsing data dari replica
+		
+		Args:
+		    change (TYPE): Description
+		
+		Returns:
+		    TYPE: Description
+		"""
 		keys = change['columnnames']
 		values = change['columnvalues']
+		tipes = change['columntypes']
 
 		hasil = {}
 
 		for c in range(0, len(keys)):
-			hasil[keys[c]] = values[c]
+
+			tipe = tipes[c]
+			value = values[c]
+
+			if tipe.find('timestamp') != -1:
+				if value:
+					value = date_parser.parse(value)
+
+			hasil[keys[c]] = value
 
 		return hasil
 
