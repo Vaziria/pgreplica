@@ -64,6 +64,7 @@ class BasicConsumer:
 	def __call__(self, msg):
 		
 		data = json.loads(msg.payload)
+		logger.debug(msg.payload)
 		changes = data['change']
 		# print('------------')
 
