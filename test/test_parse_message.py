@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from ..puan_replica import BasicConsumer
+from ..basic_consumer import BasicConsumer
 
 
 @pytest.fixture

@@ -1,7 +1,6 @@
 import sys
 import os
 import json
-from dateutil import parser as date_parser
 
 os.environ['logfile'] = 'puan_replica.log'
 
@@ -9,6 +8,9 @@ import psycopg2
 from psycopg2.extras import LogicalReplicationConnection, REPLICATION_LOGICAL
 
 from vazutils.logger import Logger
+
+
+from .parser import Parser
 
 logger = Logger(__name__)
 
@@ -54,9 +56,17 @@ def run_replication(conn, consumer):
 
 
 
-class BasicConsumer:
+class BasicReplica(Parser):
 
 	transactions = None
+
+	consumers = {
+
+	}
+
+
+	def add_consumer(self, table, obj):
+		self.consumers[table] = obj 
 
 	def ack(self, msg):
 		msg.cursor.send_feedback(flush_lsn=msg.data_start)
@@ -76,52 +86,10 @@ class BasicConsumer:
 			table = change.get('table')
 			kind = change.get('kind')
 
-			funcname = '{}_{}'.format(kind, table)
-			func = getattr(self, funcname, self.default_callback)
-
+			func = self.consumers.get(table, self.default_callback)
 			func(kind, table, change)
 
 		self.ack(msg)
-
-	def parse_data(self, change):
-		"""parsing data dari replica
-		
-		Args:
-		    change (TYPE): Description
-		
-		Returns:
-		    TYPE: Description
-		"""
-		keys = change['columnnames']
-		values = change['columnvalues']
-		tipes = change['columntypes']
-
-		hasil = {}
-
-		for c in range(0, len(keys)):
-
-			tipe = tipes[c]
-			value = values[c]
-
-			if tipe.find('timestamp') != -1:
-				if value:
-					value = date_parser.parse(value)
-
-			hasil[keys[c]] = value
-
-		return hasil
-
-	def parse_delete(self, change):
-		oldkeys = change['oldkeys']
-		keys = oldkeys['keynames']
-		values = oldkeys['keyvalues']
-
-		hasil = {}
-
-		for c in range(0, len(keys)):
-			hasil[keys[c]] = values[c]
-
-		return hasil
 
 
 	def default_callback(self, kind, table, change):
@@ -130,31 +98,31 @@ class BasicConsumer:
 		return True
 
 
-class TestConsumer(BasicConsumer):
+# class TestConsumer(BasicConsumer):
 
-	def insert_buyer(self, kind, table, change):
-		hasil = self.parse_data(change)
-		print(hasil)
+# 	def insert_buyer(self, kind, table, change):
+# 		hasil = self.parse_data(change)
+# 		print(hasil)
 
-	def update_buyer(self, kind, table, change):
-		hasil = self.parse_data(change)
-		print(hasil)
+# 	def update_buyer(self, kind, table, change):
+# 		hasil = self.parse_data(change)
+# 		print(hasil)
 
 
 	
 
 
 
-if __name__ == '__main__':
-	conn = create_connection(
-			host = '192.168.1.2',
-			password = 'heri7777',
-			port = '5432',
-			user = 'postgres'
-		)
+# if __name__ == '__main__':
+# 	conn = create_connection(
+# 			host = '192.168.1.2',
+# 			password = 'heri7777',
+# 			port = '5432',
+# 			user = 'postgres'
+# 		)
 
-	consumer = TestConsumer()
-	run_replication(conn, consumer)
+# 	consumer = TestConsumer()
+# 	run_replication(conn, consumer)
 
 
 	
