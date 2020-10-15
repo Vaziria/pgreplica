@@ -21,10 +21,12 @@ class Parser:
 
 			tipe = tipes[c]
 			value = values[c]
-
+			# print(tipe)
 			if tipe.find('timestamp') != -1:
 				if value:
 					value = date_parser.parse(value)
+			elif tipe[-2:] == '[]':
+				value = value[1:-1].split(',')
 
 			hasil[keys[c]] = value
 
