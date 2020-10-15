@@ -26,7 +26,9 @@ class Parser:
 				if value:
 					value = date_parser.parse(value)
 			elif tipe[-2:] == '[]':
-				value = value[1:-1].split(',')
+				value = value[1:-1]
+				if value:
+					value = value.split(',')
 
 			hasil[keys[c]] = value
 
