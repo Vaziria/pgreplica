@@ -64,12 +64,15 @@ class BasicReplica(Parser):
 
 	}
 
+	def __init__(self):
+		self.transactions = []
 
 	def add_consumer(self, table, obj):
 		self.consumers[table] = obj 
 
 	def ack(self, msg):
 		msg.cursor.send_feedback(flush_lsn=msg.data_start)
+		self.transactions = []
 
 	def __call__(self, msg):
 		
@@ -78,7 +81,7 @@ class BasicReplica(Parser):
 		changes = data['change']
 		# print('------------')
 
-		self.transactions = changes
+		# self.transactions = changes
 
 		for change in changes:
 			# print(change)
@@ -87,9 +90,17 @@ class BasicReplica(Parser):
 			kind = change.get('kind')
 
 			func = self.consumers.get(table, self.default_callback)
-			func(kind, table, change)
+			# print(func.__class__.__name__)
+			payload = func(kind, table, change)
+			if isinstance(payload, list):
+				self.transactions.extend(payload)
 
+		self.save_transaction()
 		self.ack(msg)
+
+
+	def save_transaction(self):
+		trans = self.transactions
 
 
 	def default_callback(self, kind, table, change):
