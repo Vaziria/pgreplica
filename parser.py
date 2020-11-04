@@ -1,3 +1,4 @@
+import json
 from dateutil import parser as date_parser
 
 class Parser:
@@ -27,7 +28,19 @@ class Parser:
 					value = date_parser.parse(value)
 			elif tipe[-2:] == '[]':
 				if value and not isinstance(value, list):
-					value = value[1:-1].split(',')
+					if tipe[:-2] == 'jsonb':
+						value = '[{}]'.format(value[1:-1])
+						value = json.loads(value)
+						value = map(lambda x: json.loads(x), value)
+						value = list(value)
+					else:
+						value = value[1:-1].split(',')
+
+
+				# elif isinstance(value, list) and tipe[:-2] == 'jsonb':
+				# 	value = map(lambda x: json.loads(x), value)
+				# 	value = list(value)
+
 
 			hasil[keys[c]] = value
 
