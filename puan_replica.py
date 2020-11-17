@@ -67,8 +67,17 @@ class BasicReplica(Parser):
 	def __init__(self):
 		self.transactions = []
 
-	def add_consumer(self, table, obj):
+	def add_consumer(self, obj = None, table = None):
+
+		if not table and obj:
+			table = obj.table
+		
+		elif not table or not obj:
+			return False
+
 		self.consumers[table] = obj 
+
+		return True
 
 	def ack(self, msg):
 		msg.cursor.send_feedback(flush_lsn=msg.data_start)
